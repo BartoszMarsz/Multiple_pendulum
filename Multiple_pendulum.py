@@ -6,9 +6,9 @@ mp.mp.dps = 50
 
 g = mp.mpf(9.81)
 
-time = 10
-h = mp.mpf(1)/mp.mpf(100) #step
-N = 3 #Number of stages
+time = 5
+h = mp.mpf(1)/mp.mpf(50) #step
+N = 10 #Number of stages
 L = mp.matrix(N, 1) #Vector of pendulum lengths
 M = mp.matrix(N, 1) #Vector of masses
 Th = mp.matrix(N, 1) #Vector of angles
@@ -84,7 +84,7 @@ def Runge_Kutta(Th, Om, h):
            Om + mp.mpf(1/6) * h * (K1_Om + 0.5 * K2_Om + 0.5 * K3_Om + K4_Om)
 
 
-DATA = open('trajectory.pdb', 'w')
+DATA = open('data.pdb', 'w')
 DATA.write(str(0))
 for j in range(N):
     DATA.write(' ' + str(round(Th[j],5)))
