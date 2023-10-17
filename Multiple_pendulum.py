@@ -6,9 +6,9 @@ mp.mp.dps = 50
 
 g = mp.mpf(9.81)
 
-time = 5
-h = mp.mpf(1)/mp.mpf(50) #step
-N = 10 #Number of stages
+time = 0.1
+h = mp.mpf(1)/mp.mpf(1000) #step
+N = 4 #Number of stages
 L = mp.matrix(N, 1) #Vector of pendulum lengths
 M = mp.matrix(N, 1) #Vector of masses
 Th = mp.matrix(N, 1) #Vector of angles
@@ -34,6 +34,23 @@ def sum_to(V, start, stop):
         sum = sum + V[i]
     return sum
 
+def T_energy(Th, Om):
+    T = mp.mpf(0)
+    for n in range(1,N+1):
+        for i in range(1,n+1):
+            for j in range(1,n+1):
+                T = T + mp.mpf(0.5) * M[n-1,0] * L[i-1,0] * L[j-1,0] * Om[i-1,0] * Om[j-1,0] * mp.cos(Th[i-1,0]-Th[j-1,0])
+    return T
+def V_energy(Th, Om):
+    V = mp.mpf(0)
+    for n in range(1,N+1):
+        for i in range(1,n+1):
+            V = V - g * M[n-1,0] * L[i-1,0] * mp.cos(Th[i-1,0])
+    return V
+
+T0 = T_energy(Th, Om)
+V0 = V_energy(Th, Om)
+E0 = T0+V0
 
 def F(Th, Om):
     '''
@@ -90,14 +107,22 @@ for j in range(N):
     DATA.write(' ' + str(round(Th[j],5)))
 for j in range(N):
     DATA.write(' ' + str(round(Om[j],5)))
+DATA.write(' ' + str(round(T_energy(Th, Om),5)))
+DATA.write(' ' + str(round(V_energy(Th, Om),5)))
+DATA.write(' ' + str(round(100*abs((V_energy(Th, Om)+T_energy(Th, Om)-E0)/E0),5)))
 DATA.write('\n')
 for i in range(1, int(time/h+1)):
     DATA.write(str(i))
+
     Th, Om = Runge_Kutta(Th, Om, h)
     for j in range(N):
         DATA.write(' ' + str(round(Th[j],5)))
     for j in range(N):
         DATA.write(' ' + str(round(Om[j],5)))
+    DATA.write(' ' + str(round(T_energy(Th, Om),5)))
+    DATA.write(' ' + str(round(V_energy(Th, Om),5)))
+    DATA.write(' ' + str(round(100*abs((V_energy(Th, Om)+T_energy(Th, Om)-E0)/E0),5)))
+
     DATA.write('\n')
 DATA.close()
 
