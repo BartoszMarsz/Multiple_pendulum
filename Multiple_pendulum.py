@@ -6,9 +6,9 @@ mp.mp.dps = 50
 
 g = mp.mpf(9.81)
 
-time = 0.1
-h = mp.mpf(1)/mp.mpf(1000) #step
-N = 4 #Number of stages
+time = 10 #Time in seconds
+h = mp.mpf(1)/mp.mpf(100) #Step
+N = 8 #Number of stages
 L = mp.matrix(N, 1) #Vector of pendulum lengths
 M = mp.matrix(N, 1) #Vector of masses
 Th = mp.matrix(N, 1) #Vector of angles
@@ -16,23 +16,24 @@ Om = mp.matrix(N, 1) #Vector of angular velocities
 
 for i in range(N):
     # input
-    L[i] = mp.mpf(1.0/mp.mpf(N))
-    M[i] = mp.mpf(1.0/mp.mpf(N))
+    L[i, 0] = mp.mpf(1.0/mp.mpf(N))
+    M[i, 0] = mp.mpf(1.0/mp.mpf(N))
     Th[i, 0] = mp.mpf(mp.radians(120))
     Om[i, 0] = mp.mpf(0.0)
 
 
 def sum_to(V, start, stop):
-    '''
+    """
     :param V: Vector to sum
     :param start: index start (included)
     :param stop: index of stop (included)
     :return: Sum of elements from start to stop
-    '''
+    """
     sum = 0
     for i in range(start, stop+1):
         sum = sum + V[i]
     return sum
+
 
 def T_energy(Th, Om):
     T = mp.mpf(0)
@@ -41,6 +42,8 @@ def T_energy(Th, Om):
             for j in range(1,n+1):
                 T = T + mp.mpf(0.5) * M[n-1,0] * L[i-1,0] * L[j-1,0] * Om[i-1,0] * Om[j-1,0] * mp.cos(Th[i-1,0]-Th[j-1,0])
     return T
+
+
 def V_energy(Th, Om):
     V = mp.mpf(0)
     for n in range(1,N+1):
@@ -48,37 +51,44 @@ def V_energy(Th, Om):
             V = V - g * M[n-1,0] * L[i-1,0] * mp.cos(Th[i-1,0])
     return V
 
+
 T0 = T_energy(Th, Om)
 V0 = V_energy(Th, Om)
 E0 = T0+V0
 
+
 def F(Th, Om):
-    '''
+    """
     :param Th: Vector of angles
     :param Om: Vector of angular velocities
     :return: Vector of functions F(Th, Om)
-    '''
+    """
     A = mp.zeros(N)
     B = mp.zeros(N)
-    G = mp.zeros(N, 1)
-    Y = mp.zeros(N, 1)
+#    G = mp.zeros(N, 1)
+#    Y = mp.zeros(N, 1)
+    Om_2 = mp.zeros(N, 1)
+    C = mp.zeros(N, 1)
+    #eq (2.25)
     for i in range(N):
-        Y[i] = Om[i] ** 2
+        Om_2[i,0] = Om[i,0] ** 2
 
     for k in range(N):
         mass_sum = mp.mpf(0)
         for n in range(k,N):
-            mass_sum = mass_sum + M[n]
-        G[k, 0] = -g * mp.sin(Th[k, 0]) * mass_sum
+            mass_sum = mass_sum + M[n,0]
+        #eq (2.25)
+        C[k, 0] = -g * mp.sin(Th[k, 0]) * mass_sum
         for i in range(N):
             if i > k:
                 mass_sum = mp.mpf(0)
                 for n in range(i, N):
-                    mass_sum = mass_sum + M[n]
-            A[k, i] = L[i] * mp.cos(Th[i, 0] - Th[k, 0]) * mass_sum
-            B[k, i] = L[i] * mp.sin(Th[i, 0] - Th[k, 0]) * mass_sum
+                    mass_sum = mass_sum + M[n,0]
+            #eq (2.26), (2.27)
+            A[k, i] = L[i, 0] * mp.cos(Th[i, 0] - Th[k, 0]) * mass_sum
+            B[k, i] = L[i, 0] * mp.sin(Th[i, 0] - Th[k, 0]) * mass_sum
 
-    return (A ** -1) * ((B * Y) + G)
+    return (A ** -1) * ((B * Om_2) + C) #eq (2.24)
 
 def Runge_Kutta(Th, Om, h):
     '''
@@ -87,38 +97,40 @@ def Runge_Kutta(Th, Om, h):
     :param h: Step
     :return: Vectors of angles and velocities after step
     '''
-
+    #eq (3.17)-(3.24)
     K1_Th = Om
     K1_Om = F(Th, Om)
-    K2_Th = Om + 0.5 * h * K1_Om
-    K2_Om = F(Th + 0.5 * h * K1_Th, Om + 0.5 * h * K1_Om)
-    K3_Th = Om + 0.5 * h * K2_Om
-    K3_Om = F(Th + 0.5 * h * K2_Th, Om + 0.5 * h * K2_Om)
+    K2_Th = Om + mp.mpf(0.5) * h * K1_Om
+    K2_Om = F(Th + mp.mpf(0.5) * h * K1_Th, Om + mp.mpf(0.5) * h * K1_Om)
+    K3_Th = Om + mp.mpf(0.5) * h * K2_Om
+    K3_Om = F(Th + mp.mpf(0.5) * h * K2_Th, Om + mp.mpf(0.5) * h * K2_Om)
     K4_Th = Om + h * K3_Om
     K4_Om = F(Th + h * K3_Th, Om + h * K3_Om)
 
-    return Th + mp.mpf(1/6) * h * (K1_Th + 0.5 * K2_Th + 0.5 * K3_Th + K4_Th), \
-           Om + mp.mpf(1/6) * h * (K1_Om + 0.5 * K2_Om + 0.5 * K3_Om + K4_Om)
+    #eq (3.25), (3.26)
+    return Th + mp.mpf(1/6) * h * (K1_Th + 2 * K2_Th + 2 * K3_Th + K4_Th), \
+           Om + mp.mpf(1/6) * h * (K1_Om + 2 * K2_Om + 2 * K3_Om + K4_Om)
 
 
-DATA = open('data.pdb', 'w')
+DATA = open('data3.pdb', 'w')
+#Initial parameters
 DATA.write(str(0))
-for j in range(N):
-    DATA.write(' ' + str(round(Th[j],5)))
-for j in range(N):
-    DATA.write(' ' + str(round(Om[j],5)))
+for i in range(N):
+    DATA.write(' ' + str(round(Th[i,0],5)))
+for i in range(N):
+    DATA.write(' ' + str(round(Om[i,0],5)))
 DATA.write(' ' + str(round(T_energy(Th, Om),5)))
 DATA.write(' ' + str(round(V_energy(Th, Om),5)))
 DATA.write(' ' + str(round(100*abs((V_energy(Th, Om)+T_energy(Th, Om)-E0)/E0),5)))
 DATA.write('\n')
-for i in range(1, int(time/h+1)):
-    DATA.write(str(i))
 
+for i in range(1, int(time/h)+1):
+    DATA.write(str(i*h))
     Th, Om = Runge_Kutta(Th, Om, h)
     for j in range(N):
-        DATA.write(' ' + str(round(Th[j],5)))
+        DATA.write(' ' + str(round(Th[j,0],5)))
     for j in range(N):
-        DATA.write(' ' + str(round(Om[j],5)))
+        DATA.write(' ' + str(round(Om[j,0],5)))
     DATA.write(' ' + str(round(T_energy(Th, Om),5)))
     DATA.write(' ' + str(round(V_energy(Th, Om),5)))
     DATA.write(' ' + str(round(100*abs((V_energy(Th, Om)+T_energy(Th, Om)-E0)/E0),5)))
@@ -126,12 +138,12 @@ for i in range(1, int(time/h+1)):
     DATA.write('\n')
 DATA.close()
 
-DATA = open('params.pdb', 'w')
+DATA = open('params3.pdb', 'w')
 DATA.write('Time= ' + str(time) + '\n')
 DATA.write('Step= ' + str(h) + '\n')
 DATA.write('Number_of_stages= ' + str(N) + '\n')
 for i in range(N):
-    DATA.write('Length_of_' + str(i+1) + '_stage= ' + str(L[i]) + '\n')
+    DATA.write('Length_of_' + str(i+1) + '_stage= ' + str(L[i,0]) + '\n')
 for i in range(N):
-    DATA.write('Mass_of_' + str(i+1) + '_mass= ' + str(M[i]) + '\n')
+    DATA.write('Mass_of_' + str(i+1) + '_mass= ' + str(M[i,0]) + '\n')
 DATA.close()
