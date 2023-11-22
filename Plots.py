@@ -3,7 +3,7 @@ import numpy as np
 from matplotlib.animation import FuncAnimation
 from matplotlib.animation import FFMpegWriter
 
-params = np.loadtxt('params3.pdb', delimiter=' ', usecols=1)
+params = np.loadtxt('params.pdb', delimiter=' ', usecols=1)
 time = float(params[0])
 h = float(params[1])
 N = int(params[2])
@@ -12,7 +12,7 @@ M = params[3+N:3+2*N]
 tau = int(time/h)+1
 
 
-data = np.loadtxt('data3.pdb', delimiter=' ')
+data = np.loadtxt('data.pdb', delimiter=' ')
 t = data[:, 0]
 Th = data[:, 1:1 + N]
 Om = data[:, 1+N:1+2*N]
@@ -92,7 +92,6 @@ def animation():
     ax3.set_ylim(-1.1 * np.sum(L), 1.1 * np.sum(L))
 
     ax1.set_ylabel('Energy [J]', fontsize=12)
-   # ax2.set_ylabel(r'$\frac{\delta E}{E_0}[\%]$', fontsize=12)
     ax2.set_ylabel(r'$\delta E/E_0 [\%]$', rotation='horizontal', fontsize=12, ha='right')
 
     ax2.set_xlabel('t[s]', fontsize=12)
@@ -177,7 +176,6 @@ def animation():
 
     anim = FuncAnimation(fig, func=animation_frame, frames=tau, init_func=init, interval=h*1000, repeat=False, blit=True)
     writervideo = FFMpegWriter(fps=int(1/h))
-    anim.save('Pendulum3.mp4', writer=writervideo)
+    anim.save('Pendulum5.mp4', writer=writervideo)
     plt.close()
-
 animation()

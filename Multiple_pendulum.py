@@ -8,6 +8,7 @@ g = mp.mpf(9.81)
 
 time = 10 #Time in seconds
 h = mp.mpf(1)/mp.mpf(100) #Step
+precision = 0.01 #[%]
 N = 8 #Number of stages
 L = mp.matrix(N, 1) #Vector of pendulum lengths
 M = mp.matrix(N, 1) #Vector of masses
@@ -51,11 +52,12 @@ def V_energy(Th, Om):
             V = V - g * M[n-1,0] * L[i-1,0] * mp.cos(Th[i-1,0])
     return V
 
-
 T0 = T_energy(Th, Om)
 V0 = V_energy(Th, Om)
 E0 = T0+V0
 
+def diff_energy(Th, Om):
+    return abs(100*((V_energy(Th, Om)+T_energy(Th, Om)-E0)/E0))
 
 def F(Th, Om):
     """
@@ -65,8 +67,6 @@ def F(Th, Om):
     """
     A = mp.zeros(N)
     B = mp.zeros(N)
-#    G = mp.zeros(N, 1)
-#    Y = mp.zeros(N, 1)
     Om_2 = mp.zeros(N, 1)
     C = mp.zeros(N, 1)
     #eq (2.25)
@@ -112,7 +112,7 @@ def Runge_Kutta(Th, Om, h):
            Om + mp.mpf(1/6) * h * (K1_Om + 2 * K2_Om + 2 * K3_Om + K4_Om)
 
 
-DATA = open('data3.pdb', 'w')
+DATA = open('raw_data.pdb', 'w')
 #Initial parameters
 DATA.write(str(0))
 for i in range(N):
@@ -121,24 +121,33 @@ for i in range(N):
     DATA.write(' ' + str(round(Om[i,0],5)))
 DATA.write(' ' + str(round(T_energy(Th, Om),5)))
 DATA.write(' ' + str(round(V_energy(Th, Om),5)))
-DATA.write(' ' + str(round(100*abs((V_energy(Th, Om)+T_energy(Th, Om)-E0)/E0),5)))
+DATA.write(' ' + str(round(diff_energy(Th,Om),7)))
 DATA.write('\n')
 
-for i in range(1, int(time/h)+1):
-    DATA.write(str(i*h))
-    Th, Om = Runge_Kutta(Th, Om, h)
+t = 0
+while(t<=time):
+    Th_1, Om_1 = Runge_Kutta(Th, Om, h)
+    h_1=h
+    print('dE = '+str(round(diff_energy(Th_1,Om_1),5)))
+    while(diff_energy(Th_1,Om_1)>precision):
+        h_1=0.1*h_1
+        Th_1, Om_1 = Runge_Kutta(Th, Om, h_1)
+    print('h = '+str(round(h_1, 5)))
+    Th, Om = Th_1, Om_1
+    t = t+h_1
+    DATA.write(str(round(t,8)))
     for j in range(N):
         DATA.write(' ' + str(round(Th[j,0],5)))
     for j in range(N):
         DATA.write(' ' + str(round(Om[j,0],5)))
     DATA.write(' ' + str(round(T_energy(Th, Om),5)))
     DATA.write(' ' + str(round(V_energy(Th, Om),5)))
-    DATA.write(' ' + str(round(100*abs((V_energy(Th, Om)+T_energy(Th, Om)-E0)/E0),5)))
+    DATA.write(' ' + str(round(abs(diff_energy(Th,Om)),5)))
 
     DATA.write('\n')
 DATA.close()
 
-DATA = open('params3.pdb', 'w')
+DATA = open('params.pdb', 'w')
 DATA.write('Time= ' + str(time) + '\n')
 DATA.write('Step= ' + str(h) + '\n')
 DATA.write('Number_of_stages= ' + str(N) + '\n')
