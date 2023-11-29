@@ -6,10 +6,10 @@ mp.mp.dps = 50
 
 g = mp.mpf(9.81)
 
-time = 10 #Time in seconds
+time = 15 #Time in seconds
 h = mp.mpf(1)/mp.mpf(100) #Step
 precision = 0.01 #[%]
-N = 8 #Number of stages
+N = 5 #Number of stages
 L = mp.matrix(N, 1) #Vector of pendulum lengths
 M = mp.matrix(N, 1) #Vector of masses
 Th = mp.matrix(N, 1) #Vector of angles
@@ -17,11 +17,11 @@ Om = mp.matrix(N, 1) #Vector of angular velocities
 
 for i in range(N):
     # input
-    L[i, 0] = mp.mpf(1.0/mp.mpf(N))
-    M[i, 0] = mp.mpf(1.0/mp.mpf(N))
-    Th[i, 0] = mp.mpf(mp.radians(120))
-    Om[i, 0] = mp.mpf(0.0)
-
+    L[i, 0] = mp.mpf(1.0)/mp.mpf(N)
+    M[i, 0] = mp.mpf(1.0)/mp.mpf(N+4)
+    Th[i, 0] = mp.mpf(mp.radians(90+(90/(N-1))*i))
+    Om[i, 0] = mp.mpf(0)
+M[N-1,0] = mp.mpf(5)/mp.mpf(N+4)
 
 def sum_to(V, start, stop):
     """
@@ -112,7 +112,7 @@ def Runge_Kutta(Th, Om, h):
            Om + mp.mpf(1/6) * h * (K1_Om + 2 * K2_Om + 2 * K3_Om + K4_Om)
 
 
-DATA = open('raw_data.pdb', 'w')
+DATA = open('5_stages_bigmass/raw_data.pdb', 'w')
 #Initial parameters
 DATA.write(str(0))
 for i in range(N):
@@ -121,20 +121,23 @@ for i in range(N):
     DATA.write(' ' + str(round(Om[i,0],5)))
 DATA.write(' ' + str(round(T_energy(Th, Om),5)))
 DATA.write(' ' + str(round(V_energy(Th, Om),5)))
-DATA.write(' ' + str(round(diff_energy(Th,Om),7)))
+DATA.write(' ' + str(diff_energy(Th,Om)))
+DATA.write(' ' + str(h))
 DATA.write('\n')
 
 t = 0
-while(t<=time):
+h_1 = mp.mpf(0)
+while(t<time+h):
+    print('t = '+str(round(t,5)), end='    ')
     Th_1, Om_1 = Runge_Kutta(Th, Om, h)
     h_1=h
-    print('dE = '+str(round(diff_energy(Th_1,Om_1),5)))
     while(diff_energy(Th_1,Om_1)>precision):
-        h_1=0.1*h_1
+        print('dE = ' + str(round(diff_energy(Th_1, Om_1), 5)), end='    ')
+        h_1=mp.mpf('0.1')*h_1
         Th_1, Om_1 = Runge_Kutta(Th, Om, h_1)
-    print('h = '+str(round(h_1, 5)))
+    print('dE = ' + str(round(diff_energy(Th_1, Om_1), 5)), end='    ')
+    print('h = '+str(h_1))
     Th, Om = Th_1, Om_1
-    t = t+h_1
     DATA.write(str(round(t,8)))
     for j in range(N):
         DATA.write(' ' + str(round(Th[j,0],5)))
@@ -142,12 +145,15 @@ while(t<=time):
         DATA.write(' ' + str(round(Om[j,0],5)))
     DATA.write(' ' + str(round(T_energy(Th, Om),5)))
     DATA.write(' ' + str(round(V_energy(Th, Om),5)))
-    DATA.write(' ' + str(round(abs(diff_energy(Th,Om)),5)))
-
+    DATA.write(' ' + str(abs(diff_energy(Th,Om))))
+    DATA.write(' ' + str(h_1))
     DATA.write('\n')
+
+    t = t+h_1
+
 DATA.close()
 
-DATA = open('params.pdb', 'w')
+DATA = open('5_stages_bigmass/params.pdb', 'w')
 DATA.write('Time= ' + str(time) + '\n')
 DATA.write('Step= ' + str(h) + '\n')
 DATA.write('Number_of_stages= ' + str(N) + '\n')

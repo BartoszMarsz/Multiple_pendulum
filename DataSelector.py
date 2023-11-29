@@ -1,14 +1,19 @@
 import numpy as np
 import math
-raw_data = np.loadtxt('raw_data.pdb', delimiter=' ')
+raw_data = np.loadtxt('5_stages_bigmass/raw_data.pdb', delimiter=' ')
 t_max = raw_data.shape[0]
 t = 0
-DATA = open('data.pdb', 'w')
+DATA = open('5_stages_bigmass/data.pdb', 'w')
 for i in range(t_max):
-#    print('t % 0.01 = '+str(round(raw_data[i, 0] % 0.01,2)))
-    if(raw_data[i, 0]>=t):
-        for j in range(raw_data.shape[1]-1):
-            DATA.write(str(math.floor(raw_data[i, j]*100)/100)+' ')
-        DATA.write(str(math.floor(raw_data[i, raw_data.shape[1]-1] * 100) / 100))
+    if(raw_data[i, 0]>=round(t,3)):
+        print(round(t,3), end='    ')
+        print(raw_data[i, 0])
+        DATA.write(str(math.floor(raw_data[i, 0] * 1000) / 1000) + ' ')
+        for j in range(1,raw_data.shape[1]-4):
+            DATA.write(str(round(raw_data[i, j], 2)) + ' ')
+        DATA.write(str(round(raw_data[i, raw_data.shape[1] - 4],3)) + ' ')
+        DATA.write(str(round(raw_data[i, raw_data.shape[1] - 3],3)) + ' ')
+        DATA.write(str(round(raw_data[i, raw_data.shape[1] - 2],6)) + ' ')
+        DATA.write(str(raw_data[i, raw_data.shape[1] - 1]))
         DATA.write('\n')
-        t = t + 0.01
+        t = t + 1/60
