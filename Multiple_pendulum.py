@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 
 mp.mp.dps = 50
 
-g = mp.mpf(9.81)
+g = mp.mpf('9.81')
 
-time = 15 #Time in seconds
-h = mp.mpf(1)/mp.mpf(100) #Step
+time = 1 #Time in seconds
+h = mp.mpf('0.01') #Step
 precision = 0.01 #[%]
 N = 5 #Number of stages
 L = mp.matrix(N, 1) #Vector of pendulum lengths
@@ -37,16 +37,16 @@ def sum_to(V, start, stop):
 
 
 def T_energy(Th, Om):
-    T = mp.mpf(0)
+    T = mp.mpf('0')
     for n in range(1,N+1):
         for i in range(1,n+1):
             for j in range(1,n+1):
-                T = T + mp.mpf(0.5) * M[n-1,0] * L[i-1,0] * L[j-1,0] * Om[i-1,0] * Om[j-1,0] * mp.cos(Th[i-1,0]-Th[j-1,0])
+                T = T + mp.mpf('0.5') * M[n-1,0] * L[i-1,0] * L[j-1,0] * Om[i-1,0] * Om[j-1,0] * mp.cos(Th[i-1,0]-Th[j-1,0])
     return T
 
 
 def V_energy(Th, Om):
-    V = mp.mpf(0)
+    V = mp.mpf('0')
     for n in range(1,N+1):
         for i in range(1,n+1):
             V = V - g * M[n-1,0] * L[i-1,0] * mp.cos(Th[i-1,0])
@@ -74,14 +74,14 @@ def F(Th, Om):
         Om_2[i,0] = Om[i,0] ** 2
 
     for k in range(N):
-        mass_sum = mp.mpf(0)
+        mass_sum = mp.mpf('0')
         for n in range(k,N):
             mass_sum = mass_sum + M[n,0]
         #eq (2.25)
         C[k, 0] = -g * mp.sin(Th[k, 0]) * mass_sum
         for i in range(N):
             if i > k:
-                mass_sum = mp.mpf(0)
+                mass_sum = mp.mpf('0')
                 for n in range(i, N):
                     mass_sum = mass_sum + M[n,0]
             #eq (2.26), (2.27)
@@ -100,19 +100,19 @@ def Runge_Kutta(Th, Om, h):
     #eq (3.17)-(3.24)
     K1_Th = Om
     K1_Om = F(Th, Om)
-    K2_Th = Om + mp.mpf(0.5) * h * K1_Om
-    K2_Om = F(Th + mp.mpf(0.5) * h * K1_Th, Om + mp.mpf(0.5) * h * K1_Om)
-    K3_Th = Om + mp.mpf(0.5) * h * K2_Om
-    K3_Om = F(Th + mp.mpf(0.5) * h * K2_Th, Om + mp.mpf(0.5) * h * K2_Om)
+    K2_Th = Om + mp.mpf('0.5') * h * K1_Om
+    K2_Om = F(Th + mp.mpf('0.5') * h * K1_Th, Om + mp.mpf('0.5') * h * K1_Om)
+    K3_Th = Om + mp.mpf('0.5') * h * K2_Om
+    K3_Om = F(Th + mp.mpf('0.5') * h * K2_Th, Om + mp.mpf('0.5') * h * K2_Om)
     K4_Th = Om + h * K3_Om
     K4_Om = F(Th + h * K3_Th, Om + h * K3_Om)
 
     #eq (3.25), (3.26)
-    return Th + mp.mpf(1/6) * h * (K1_Th + 2 * K2_Th + 2 * K3_Th + K4_Th), \
-           Om + mp.mpf(1/6) * h * (K1_Om + 2 * K2_Om + 2 * K3_Om + K4_Om)
+    return Th + mp.mpf('1/6') * h * (K1_Th + mp.mpf('2') * K2_Th + mp.mpf('2') * K3_Th + K4_Th), \
+           Om + mp.mpf('1/6') * h * (K1_Om + mp.mpf('2') * K2_Om + mp.mpf('2') * K3_Om + K4_Om)
 
 
-DATA = open('5_stages_bigmass/raw_data.pdb', 'w')
+DATA = open('raw_data.pdb', 'w')
 #Initial parameters
 DATA.write(str(0))
 for i in range(N):
@@ -126,7 +126,7 @@ DATA.write(' ' + str(h))
 DATA.write('\n')
 
 t = 0
-h_1 = mp.mpf(0)
+h_1 = mp.mpf('0')
 while(t<time+h):
     print('t = '+str(round(t,5)), end='    ')
     Th_1, Om_1 = Runge_Kutta(Th, Om, h)
@@ -153,7 +153,7 @@ while(t<time+h):
 
 DATA.close()
 
-DATA = open('5_stages_bigmass/params.pdb', 'w')
+DATA = open('params.pdb', 'w')
 DATA.write('Time= ' + str(time) + '\n')
 DATA.write('Step= ' + str(h) + '\n')
 DATA.write('Number_of_stages= ' + str(N) + '\n')

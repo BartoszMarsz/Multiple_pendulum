@@ -211,5 +211,6 @@ def animation():
     anim.save('5_stages_bigmass/Pendulum5.mp4', writer=writervideo)
     #plt.show()
     plt.close()
-static()
+#static()
 #animation()
+

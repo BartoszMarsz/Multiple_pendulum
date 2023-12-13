@@ -1,9 +1,9 @@
 import numpy as np
 import math
-raw_data = np.loadtxt('5_stages_bigmass/raw_data.pdb', delimiter=' ')
+raw_data = np.loadtxt('raw_data.pdb', delimiter=' ')
 t_max = raw_data.shape[0]
 t = 0
-DATA = open('5_stages_bigmass/data.pdb', 'w')
+DATA = open('data.pdb', 'w')
 for i in range(t_max):
     if(raw_data[i, 0]>=round(t,3)):
         print(round(t,3), end='    ')
