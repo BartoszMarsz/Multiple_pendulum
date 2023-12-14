@@ -1,42 +1,35 @@
-from numpy import vectorize
 import mpmath as mp
-import matplotlib.pyplot as plt
 
-mp.mp.dps = 50
+mp.mp.dps = 50        # number of digits
 
-g = mp.mpf('9.81')
+# Simulation parameters
+g = mp.mpf('9.81')    # standard gravity !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+time = 1              # time of simulation in seconds
+h0 = mp.mpf('0.01')   # time step
+eta = 0.01            # precision of energy conservation[%]
+N = 5                 # number of stages
+t = 0
 
-time = 1 #Time in seconds
-h = mp.mpf('0.01') #Step
-precision = 0.01 #[%]
-N = 5 #Number of stages
-L = mp.matrix(N, 1) #Vector of pendulum lengths
-M = mp.matrix(N, 1) #Vector of masses
-Th = mp.matrix(N, 1) #Vector of angles
-Om = mp.matrix(N, 1) #Vector of angular velocities
+# Declaration of pendulum stages parameters
+L = mp.matrix(N, 1)   # vector of pendulum lengths
+M = mp.matrix(N, 1)   # vector of masses
+Th = mp.matrix(N, 1)  # vector of angles
+Om = mp.matrix(N, 1)  # vector of angular velocities
 
+# Definition of pendulum stages parameters
 for i in range(N):
-    # input
     L[i, 0] = mp.mpf(1.0)/mp.mpf(N)
-    M[i, 0] = mp.mpf(1.0)/mp.mpf(N+4)
+    M[i, 0] = mp.mpf(1.0)/mp.mpf(N)
     Th[i, 0] = mp.mpf(mp.radians(90+(90/(N-1))*i))
     Om[i, 0] = mp.mpf(0)
-M[N-1,0] = mp.mpf(5)/mp.mpf(N+4)
-
-def sum_to(V, start, stop):
-    """
-    :param V: Vector to sum
-    :param start: index start (included)
-    :param stop: index of stop (included)
-    :return: Sum of elements from start to stop
-    """
-    sum = 0
-    for i in range(start, stop+1):
-        sum = sum + V[i]
-    return sum
 
 
 def T_energy(Th, Om):
+    """
+    :param Th: Vector of angles
+    :param Om: Vector of angular velocities
+    :return: Kinetic energy
+    """
     T = mp.mpf('0')
     for n in range(1,N+1):
         for i in range(1,n+1):
@@ -46,18 +39,32 @@ def T_energy(Th, Om):
 
 
 def V_energy(Th, Om):
+    """
+    :param Th: Vector of angles
+    :param Om: Vector of angular velocities
+    :return: Potential energy
+    """
     V = mp.mpf('0')
     for n in range(1,N+1):
         for i in range(1,n+1):
             V = V - g * M[n-1,0] * L[i-1,0] * mp.cos(Th[i-1,0])
     return V
 
+
+# Initial energy
 T0 = T_energy(Th, Om)
 V0 = V_energy(Th, Om)
 E0 = T0+V0
 
+
 def diff_energy(Th, Om):
+    """
+    :param Th: Vector of angles
+    :param Om: Vector of angular velocities
+    :return: Difference in energy/E0
+    """
     return abs(100*((V_energy(Th, Om)+T_energy(Th, Om)-E0)/E0))
+
 
 def F(Th, Om):
     """
@@ -91,12 +98,12 @@ def F(Th, Om):
     return (A ** -1) * ((B * Om_2) + C) #eq (2.24)
 
 def Runge_Kutta(Th, Om, h):
-    '''
+    """
     :param Th: Vector of angles
     :param Om: Vector of angular velocities
     :param h: Step
     :return: Vectors of angles and velocities after step
-    '''
+    """
     #eq (3.17)-(3.24)
     K1_Th = Om
     K1_Om = F(Th, Om)
@@ -114,8 +121,19 @@ def Runge_Kutta(Th, Om, h):
                                      mp.mpf('2') * K3_Om + K4_Om)
 
 
+# Save parameters to file
+DATA = open('params.pdb', 'w')
+DATA.write('Time= ' + str(time) + '\n')
+DATA.write('Step= ' + str(h0) + '\n')
+DATA.write('Number_of_stages= ' + str(N) + '\n')
+for i in range(N):
+    DATA.write('Length_of_' + str(i+1) + '_stage= ' + str(L[i,0]) + '\n')
+for i in range(N):
+    DATA.write('Mass_of_' + str(i+1) + '_mass= ' + str(M[i,0]) + '\n')
+DATA.close()
+
+# Save initial data
 DATA = open('raw_data.pdb', 'w')
-#Initial parameters
 DATA.write(str(0))
 for i in range(N):
     DATA.write(' ' + str(round(Th[i,0],5)))
@@ -124,43 +142,41 @@ for i in range(N):
 DATA.write(' ' + str(round(T_energy(Th, Om),5)))
 DATA.write(' ' + str(round(V_energy(Th, Om),5)))
 DATA.write(' ' + str(diff_energy(Th,Om)))
-DATA.write(' ' + str(h))
+DATA.write(' ' + str(h0))
 DATA.write('\n')
 
-t = 0
-h_1 = mp.mpf('0')
-while(t<time+h):
+# Simulation loop
+while(t < time + h0):
     print('t = '+str(round(t,5)), end='    ')
+
+    # Calculation of angles and angular velocities after time step
+    h = h0 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     Th_1, Om_1 = Runge_Kutta(Th, Om, h)
-    h_1=h
-    while(diff_energy(Th_1,Om_1)>precision):
-        print('dE = ' + str(round(diff_energy(Th_1, Om_1), 5)), end='    ')
-        h_1=mp.mpf('0.1')*h_1
-        Th_1, Om_1 = Runge_Kutta(Th, Om, h_1)
-    print('dE = ' + str(round(diff_energy(Th_1, Om_1), 5)), end='    ')
-    print('h = '+str(h_1))
+    dE = diff_energy(Th_1, Om_1)
+
+    # Condition of energy conservation
+    while(dE > eta):
+        h = mp.mpf('0.1')*h
+        Th_1, Om_1 = Runge_Kutta(Th, Om, h)
+        dE = diff_energy(Th_1, Om_1) # Obliczenie tylko dE!!!!!!!!!!!!!!!!!!
+    print('dE = ' + str(round(dE, 5)), end='    ')
+    print('h = ' + str(h))
     Th, Om = Th_1, Om_1
+    T = T_energy(Th, Om) #!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    V = V_energy(Th, Om) #!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # Write data to file
     DATA.write(str(round(t,8)))
     for j in range(N):
         DATA.write(' ' + str(round(Th[j,0],5)))
     for j in range(N):
         DATA.write(' ' + str(round(Om[j,0],5)))
-    DATA.write(' ' + str(round(T_energy(Th, Om),5)))
-    DATA.write(' ' + str(round(V_energy(Th, Om),5)))
-    DATA.write(' ' + str(abs(diff_energy(Th,Om))))
-    DATA.write(' ' + str(h_1))
+    DATA.write(' ' + str(round(T,5)))
+    DATA.write(' ' + str(round(V,5)))
+    DATA.write(' ' + str(dE))
+    DATA.write(' ' + str(h))
     DATA.write('\n')
 
-    t = t+h_1
-
-DATA.close()
-
-DATA = open('params.pdb', 'w')
-DATA.write('Time= ' + str(time) + '\n')
-DATA.write('Step= ' + str(h) + '\n')
-DATA.write('Number_of_stages= ' + str(N) + '\n')
-for i in range(N):
-    DATA.write('Length_of_' + str(i+1) + '_stage= ' + str(L[i,0]) + '\n')
-for i in range(N):
-    DATA.write('Mass_of_' + str(i+1) + '_mass= ' + str(M[i,0]) + '\n')
+    # Time
+    t = t+h
 DATA.close()
