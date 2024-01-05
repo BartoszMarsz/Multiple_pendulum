@@ -3,11 +3,11 @@ import mpmath as mp
 mp.mp.dps = 50  # number of digits
 
 # Simulation parameters
-g = mp.mpf('9.81')  # standard gravity !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-time = 1  # time of simulation in seconds
+g = mp.mpf('0')  # standard gravity
+time = 5  # time of simulation in seconds
 h0 = mp.mpf('0.01')  # default time step
 eta = 0.01  # precision of energy conservation[%]
-N = 5  # number of pendulum stages
+N = 8  # number of pendulum stages
 t = mp.mpf('0')
 
 # Declaration of pendulum stages parameters
@@ -16,12 +16,22 @@ M = mp.matrix(N, 1)  # vector of masses (2-dim, vertical)
 Th = mp.matrix(N, 1)  # vector of angles (2-dim, vertical)
 Om = mp.matrix(N, 1)  # vector of angular velocities (2-dim, vertical)
 
-# Definition of pendulum stages parameters
+# Input pendulum stages parameters
+
+L[0, 0] = 0.0185185185
+L[1, 0] = 0.0185185185
+L[2, 0] = 0.037037037
+L[3, 0] = 0.0555555556
+L[4, 0] = 0.0925925926
+L[5, 0] = 0.1481481481
+L[6, 0] = 0.2407407407
+L[7, 0] = 0.3888888889
+
 for i in range(N):
-    L[i, 0] = mp.mpf(1.0) / mp.mpf(N)
-    M[i, 0] = mp.mpf(1.0) / mp.mpf(N)
-    Th[i, 0] = mp.mpf(mp.radians(90 + (90 / (N - 1)) * i))
-    Om[i, 0] = mp.mpf(0)
+    M[i, 0] = mp.mpf('1.0') / mp.mpf(N)
+    Th[i, 0] = mp.radians('90')
+    Om[i, 0] = mp.mpf('0')
+Om[N,0] = mp.radians('360')
 
 
 def T_energy(Th, Om):
@@ -103,8 +113,8 @@ def Runge_Kutta(Th, Om, h):
     """
     :param Th: Vector of angles
     :param Om: Vector of angular velocities
-    :param h: Step
-    :return: Vectors of angles and velocities after step
+    :param h: Time step
+    :return: Vectors of angles and velocities after time step
     """
     # eq (3.17)-(3.24)
     K1_Th = Om
