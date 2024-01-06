@@ -134,7 +134,6 @@ def F(Th, Om):
     # eq (2.25)
     for i in range(N):
         Om_2[i, 0] = Om[i, 0] ** 2
-
     for k in range(N):
         mass_sum = mp.mpf('0')
         for n in range(k, N):
@@ -149,7 +148,6 @@ def F(Th, Om):
             # eq (2.26), (2.27)
             A[k, i] = L[i, 0] * mp.cos(Th[i, 0] - Th[k, 0]) * mass_sum
             B[k, i] = L[i, 0] * mp.sin(Th[i, 0] - Th[k, 0]) * mass_sum
-
     return (A ** -1) * ((B * Om_2) + C)  # eq (3.10)
 
 
@@ -169,7 +167,6 @@ def Runge_Kutta(Th, Om, h):
     K3_Om = F(Th + mp.mpf('0.5') * h * K2_Th, Om + mp.mpf('0.5') * h * K2_Om)
     K4_Th = Om + h * K3_Om
     K4_Om = F(Th + h * K3_Th, Om + h * K3_Om)
-
     # eq (3.21)
     return Th + mp.mpf('1/6') * h * (K1_Th + mp.mpf('2') * K2_Th +
                                      mp.mpf('2') * K3_Th + K4_Th), \
