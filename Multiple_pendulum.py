@@ -1,13 +1,11 @@
 import mpmath as mp
-
 mp.mp.dps = 50  # number of digits
-
 # Simulation parameters
-g = mp.mpf('0')  # standard gravity
-time = 5  # time of simulation in seconds
+g = mp.mpf('9.81')  # standard gravity
+time = 1  # time of simulation in seconds
 h0 = mp.mpf('0.01')  # default time step
 eta = 0.01  # precision of energy conservation[%]
-N = 8  # number of pendulum stages
+N = 3  # number of pendulum stages
 t = mp.mpf('0')
 
 # Declaration of pendulum stages parameters
@@ -17,21 +15,66 @@ Th = mp.matrix(N, 1)  # vector of angles (2-dim, vertical)
 Om = mp.matrix(N, 1)  # vector of angular velocities (2-dim, vertical)
 
 # Input pendulum stages parameters
-
-L[0, 0] = 0.0185185185
-L[1, 0] = 0.0185185185
-L[2, 0] = 0.037037037
-L[3, 0] = 0.0555555556
-L[4, 0] = 0.0925925926
-L[5, 0] = 0.1481481481
-L[6, 0] = 0.2407407407
-L[7, 0] = 0.3888888889
-
 for i in range(N):
-    M[i, 0] = mp.mpf('1.0') / mp.mpf(N)
-    Th[i, 0] = mp.radians('90')
+    L[i, 0] = mp.mpf('1')/mp.mpf(N)
+    M[i, 0] = mp.mpf('1')/mp.mpf(N)
+    Th[i, 0] = mp.radians(mp.mpf('120'))
     Om[i, 0] = mp.mpf('0')
-Om[N,0] = mp.radians('360')
+
+dec1 = input("Do you want to input simulation parameters (g, time, h0, eta) or set default?\n\
+1 - input, any other - default\n")
+if dec1 == "1":
+    while 1:
+        try:
+            g = mp.mpf(input("g[m/s^2] = "))
+            time = float(input("time[s] = "))
+            if time <= 0:
+                raise ValueError
+            h0 = mp.mpf(input("h0[s] = "))
+            if h0 <= 0:
+                raise ValueError
+            eta = mp.mpf(input("eta[%] = "))
+            if eta <= 0:
+                raise ValueError
+            break
+        except ValueError:
+            print("Error! Bad values.")
+
+dec2 = input("Do you want to input pendulum parameters (N, L, M) or set default?\n\
+1 - input, any other - default\n")
+if dec2 == "1":
+    while 1:
+        try:
+            N = float(input("N = "))
+            if N-int(N) != 0 or N <= 0:
+                raise ValueError
+            N = int(N)
+            L = mp.matrix(N, 1)  # vector of pendulum lengths (2-dim, vertical)
+            M = mp.matrix(N, 1)  # vector of masses (2-dim, vertical)
+            for i in range(N):
+                L[i, 0] = mp.mpf(input("l"+str(i+1)+"[m] = "))
+                if L[i, 0] <= 0:
+                    raise ValueError
+            for i in range(N):
+                M[i, 0] = mp.mpf(input("m"+str(i+1)+"[kg] = "))
+                if M[i, 0] <= 0:
+                    raise ValueError
+            break
+        except ValueError:
+            print("Error! Bad values.")
+
+dec3 = input("Do you want to input pendulum initial position (Th, Om) or set default?\n\
+1 - input, any other - default\n")
+if dec3 == "1":
+    while 1:
+        try:
+            for i in range(N):
+                Th[i, 0] = mp.mpf(input("th"+str(i+1)+"[deg.] = "))
+            for i in range(N):
+                Om[i, 0] = mp.mpf(input("om"+str(i+1)+"[rad/s] = "))
+            break
+        except ValueError:
+            print("Error! Bad values.")
 
 
 def T_energy(Th, Om):
@@ -66,6 +109,7 @@ def V_energy(Th, Om):
 T0 = T_energy(Th, Om)  # kinetic energy
 V0 = V_energy(Th, Om)  # potential energy
 E0 = T0 + V0  # total energy
+
 
 
 def diff_energy(Th, Om):
@@ -162,7 +206,7 @@ while t < time + h0:
     print('t = ' + str(round(t, 5)), end='    ')
 
     # Calculation of angles and angular velocities after time step
-    h = h0  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    h = h0
     Th_1, Om_1 = Runge_Kutta(Th, Om, h)
     dE = diff_energy(Th_1, Om_1)
 
@@ -170,12 +214,12 @@ while t < time + h0:
     while dE > eta:
         h = mp.mpf('0.1') * h
         Th_1, Om_1 = Runge_Kutta(Th, Om, h)
-        dE = diff_energy(Th_1, Om_1)  # Obliczenie tylko dE!!!!!!!!!!!!!!!!!!
+        dE = diff_energy(Th_1, Om_1)
     print('dE = ' + str(round(dE, 5)), end='    ')
     print('h = ' + str(h))
     Th, Om = Th_1, Om_1
-    T = T_energy(Th, Om)  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    V = V_energy(Th, Om)  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    T = T_energy(Th, Om)
+    V = V_energy(Th, Om)
 
     # Write data to file
     DATA.write(str(round(t, 8)))
