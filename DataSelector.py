@@ -24,17 +24,3 @@ for i in range(n):
 
         t = t + tau
 DATA.close()
-
-"""
-        # write angles and angular velocities (rounded to 2 digits)
-        for j in range(1, m-4):
-            DATA.write(str(round(raw_data[i, j], 2)) + ' ')
-
-        # write T, V (3 digits) and dE (6 digits)
-        DATA.write(str(round(raw_data[i, m - 4], 3)) + ' ')
-        DATA.write(str(round(raw_data[i, m - 3], 3)) + ' ')
-        DATA.write(str(round(raw_data[i, m - 2], 6)) + ' ')
-
-        # write h
-        DATA.write(str(raw_data[i, m - 1]))
-"""

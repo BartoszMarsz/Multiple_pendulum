@@ -10,7 +10,7 @@ N = int(params[2])  # number of pendulum stages
 L = params[3:3 + N]  # pendulum lengths (vector, 1-dim)
 M = params[3 + N:3 + 2 * N]  # masses (vector, 1-dim)
 
-data = np.loadtxt('data.pdb', delimiter=' ')
+data = np.loadtxt('data_por2.pdb', delimiter=' ')
 t = data[:, 0]  # time iterators (vector, 1-dim)
 Th = data[:, 1:1 + N]  # matrix of angles (row: th_1, ..., th_N, col: evolution in time)
 Om = data[:, 1 + N:1 + 2 * N]  # matrix of angular velocities (row: om_1, ..., om_N, col: evolution in time)
@@ -54,7 +54,6 @@ def static():
     ax2.set_xlabel('t[s]', fontsize=16)
     ax3.set_xlabel('[m]', fontsize=16)
     ax3.set_ylabel('[m]', fontsize=16)
-
 
     # specifying appearance
     ax1.grid(color='dimgrey')
@@ -193,16 +192,21 @@ def animation():
     anim = FuncAnimation(fig, func=animation_frame, frames=tau, init_func=init, interval=int(1000 / 60), repeat=False,
                          blit=True)
     plt.show()
-    dec = input("Do you want to save?\ny - yes\n")
-    if dec == "y":
+    dec = input("Do you want to save?\n1 - yes, any other - no\n")
+    if dec == "1":
         anim.save('Pendulum.mp4', writer=FFMpegWriter(fps=60))
     plt.close()
 
 
-stat_anim = input("With do you want to display?\n1 - static, 2 - animation\n")
-if stat_anim == str(1):
-    static()
-elif stat_anim == str(2):
-    animation()
-else:
-    print("Bad value.")
+while 1:
+    try:
+        stat_anim = input("With do you want to display?\n1 - static graph, 2 - animation\n")
+        if stat_anim == str(1):
+            static()
+        elif stat_anim == str(2):
+            animation()
+        else:
+            raise ValueError
+        break
+    except ValueError:
+        print("Error! Bad value.")
