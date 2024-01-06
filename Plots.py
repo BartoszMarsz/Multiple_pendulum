@@ -10,7 +10,7 @@ N = int(params[2])  # number of pendulum stages
 L = params[3:3 + N]  # pendulum lengths (vector, 1-dim)
 M = params[3 + N:3 + 2 * N]  # masses (vector, 1-dim)
 
-data = np.loadtxt('data_por2.pdb', delimiter=' ')
+data = np.loadtxt('data.pdb', delimiter=' ')
 t = data[:, 0]  # time iterators (vector, 1-dim)
 Th = data[:, 1:1 + N]  # matrix of angles (row: th_1, ..., th_N, col: evolution in time)
 Om = data[:, 1 + N:1 + 2 * N]  # matrix of angular velocities (row: om_1, ..., om_N, col: evolution in time)
