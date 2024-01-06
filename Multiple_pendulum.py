@@ -160,7 +160,7 @@ def Runge_Kutta(Th, Om, h):
     :param h: Time step
     :return: Vectors of angles and velocities after time step
     """
-    # eq (3.17)-(3.24)
+    # eq (3.17)-(3.20)
     K1_Th = Om
     K1_Om = F(Th, Om)
     K2_Th = Om + mp.mpf('0.5') * h * K1_Om
@@ -170,7 +170,7 @@ def Runge_Kutta(Th, Om, h):
     K4_Th = Om + h * K3_Om
     K4_Om = F(Th + h * K3_Th, Om + h * K3_Om)
 
-    # eq (3.25), (3.26)
+    # eq (3.21)
     return Th + mp.mpf('1/6') * h * (K1_Th + mp.mpf('2') * K2_Th +
                                      mp.mpf('2') * K3_Th + K4_Th), \
            Om + mp.mpf('1/6') * h * (K1_Om + mp.mpf('2') * K2_Om +
