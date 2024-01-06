@@ -150,7 +150,7 @@ def F(Th, Om):
             A[k, i] = L[i, 0] * mp.cos(Th[i, 0] - Th[k, 0]) * mass_sum
             B[k, i] = L[i, 0] * mp.sin(Th[i, 0] - Th[k, 0]) * mass_sum
 
-    return (A ** -1) * ((B * Om_2) + C)  # eq (2.24)
+    return (A ** -1) * ((B * Om_2) + C)  # eq (3.10)
 
 
 def Runge_Kutta(Th, Om, h):
