@@ -13,8 +13,6 @@ DATA = open('data.pdb', 'w')
 for i in range(n):
     # find iteration of tau or nearest approximation
     if raw_data[i, 0] >= round(t, 3):
-        print(round(t, 3), end='    ')
-        print(raw_data[i, 0])
 
         # write found line to file
         for j in range(0, m-1):

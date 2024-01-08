@@ -179,7 +179,7 @@ def animation():
         return line, T, V, dE, trajectory, timer,
 
     def animation_frame(i):
-        print(round(i / 60, 2))
+        print("t = " + str(round(t[i], 3)))
         T.set_data(t[:i], T_data[:i])
         V.set_data(t[:i], V_data[:i])
         dE.set_data(t[:i], dE_data[:i])
